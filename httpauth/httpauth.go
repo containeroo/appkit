@@ -158,3 +158,40 @@ func containsControl(path string) bool {
 	}
 	return false
 }
+
+// OnPolicyError reports an authorization infrastructure failure without exposing its cause to clients.
+type OnPolicyError func(http.ResponseWriter, *http.Request, error)
+
+// AuthorizeWithError applies persisted authorization policy without hiding database failures.
+// Denial returns HTTP 403 while unexpected failures are handled separately.
+func AuthorizeWithError[User any](allowed func(*http.Request, User) (bool, error), onFailure OnFailure, onError OnPolicyError) func(http.Handler) http.Handler {
+	if onFailure == nil {
+		onFailure = JSONFailure
+	}
+	if onError == nil {
+		onError = func(w http.ResponseWriter, r *http.Request, _ error) { onFailure(w, r, http.StatusInternalServerError) }
+	}
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			user, ok := CurrentUser[User](r)
+			if !ok {
+				onFailure(w, r, http.StatusUnauthorized)
+				return
+			}
+			if allowed == nil {
+				onFailure(w, r, http.StatusForbidden)
+				return
+			}
+			permitted, err := allowed(r, user)
+			if err != nil {
+				onError(w, r, err)
+				return
+			}
+			if !permitted {
+				onFailure(w, r, http.StatusForbidden)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}

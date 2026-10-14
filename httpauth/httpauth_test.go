@@ -90,3 +90,25 @@ func TestRedirectFailure(t *testing.T) {
 		t.Fatal("unsafe redirect accepted")
 	}
 }
+
+func TestAuthorizeWithError(t *testing.T) {
+	for _, tc := range []struct {
+		user    bool
+		allowed bool
+		failure error
+		want    int
+	}{
+		{true, true, nil, 204}, {true, false, nil, 403}, {true, false, errors.New("database unavailable"), 500}, {false, true, nil, 401},
+	} {
+		request := httptest.NewRequest(http.MethodGet, "/admin", nil)
+		if tc.user {
+			request = WithUser(request, user{Name: "alice"})
+		}
+		handler := AuthorizeWithError[user](func(*http.Request, user) (bool, error) { return tc.allowed, tc.failure }, JSONFailure, nil)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(204) }))
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, request)
+		if response.Code != tc.want {
+			t.Errorf("allowed=%t failure=%v: got %d want %d", tc.allowed, tc.failure, response.Code, tc.want)
+		}
+	}
+}

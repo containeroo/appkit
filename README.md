@@ -46,3 +46,7 @@ go run ./examples/basic --route-prefix /app
 curl http://127.0.0.1:8080/app/
 curl -i http://127.0.0.1:8081/healthz
 ```
+
+Proxy authentication may restrict immediate ingress peers with `proxy.TrustCIDRs` and `config.Proxy.TrustedCIDRs`.
+Use `httpauth.AuthorizeWithError` for authorization checks that can fail independently of access denial.
+`web.SPA` renders the entry point as a Go template, while `httpkit/assets.Static` serves static files.

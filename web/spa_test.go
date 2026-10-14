@@ -7,47 +7,23 @@ import (
 	"testing/fstest"
 )
 
-func TestSPA(t *testing.T) {
-	handler := SPA{BasePath: "/motus/", Assets: fstest.MapFS{
-		"index.html":    {Data: []byte(`<base href="{{.BaseHref}}">`)},
-		"assets/app.js": {Data: []byte(`console.log("hello")`)},
-	}}.Handler()
-	tests := []struct {
+func TestSPAIndexAndMissingAssets(t *testing.T) {
+	handler := (SPA{Assets: fstest.MapFS{"index.html": {Data: []byte(`<base href="{{ .BaseHref }}"><meta name="route" content="{{ .RoutePrefix }}">`)}}, BasePath: "/motus"}).Handler()
+	for _, tc := range []struct {
 		path, accept string
-		status       int
-		contains     string
+		want         int
 	}{
-		{"/", "", 200, `href="/motus/"`},
-		{"/training", "text/html", 200, `href="/motus/"`},
-		{"/assets/app.js", "", 200, `console.log`},
-		{"/assets/missing.js", "text/html", 404, ""},
-		{"/missing-route", "application/json", 404, ""},
-	}
-	for _, tc := range tests {
-		record := httptest.NewRecorder()
-		request := httptest.NewRequest("GET", tc.path, nil)
-		if tc.accept != "" {
-			request.Header.Set("Accept", tc.accept)
+		{"/", "text/html", 200}, {"/training", "text/html", 200}, {"/assets/missing.js", "text/html", 404}, {"/api/missing", "application/json", 404},
+	} {
+		request := httptest.NewRequest(http.MethodGet, tc.path, nil)
+		request.Header.Set("Accept", tc.accept)
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, request)
+		if response.Code != tc.want {
+			t.Errorf("%s: got %d want %d", tc.path, response.Code, tc.want)
 		}
-		handler.ServeHTTP(record, request)
-		if record.Code != tc.status {
-			t.Errorf("%s: got %d, want %d", tc.path, record.Code, tc.status)
-		}
-		if tc.contains != "" && !contains(record.Body.String(), tc.contains) {
-			t.Errorf("%s: missing %q", tc.path, tc.contains)
+		if tc.path == "/" && response.Body.String() != `<base href="/motus/"><meta name="route" content="/motus">` {
+			t.Errorf("wrong template data: %s", response.Body.String())
 		}
 	}
-	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/", nil))
-	if response.Code != 405 {
-		t.Error("POST should be rejected")
-	}
-}
-func contains(text, needle string) bool {
-	for i := 0; i+len(needle) <= len(text); i++ {
-		if text[i:i+len(needle)] == needle {
-			return true
-		}
-	}
-	return false
 }

@@ -1,29 +1,29 @@
-// Package web serves embedded SPA assets and falls back to index HTML only for navigation requests.
-// The host application remains responsible for registering API and authentication routes.
+// Package web serves embedded single-page applications with optional Go-template index data.
 package web
 
 import (
 	"bytes"
 	"io/fs"
-	"mime"
 	"net/http"
 	"path"
 	"strings"
+	"text/template"
 	"time"
 )
 
-// SPA configures an embedded single-page application handler.
+// SPA describes a frontend build and its externally mounted base path.
 type SPA struct {
-	// Assets contains the frontend build files rooted at its distribution directory.
+	// Assets is rooted at the web distribution directory.
 	Assets fs.FS
-	// Index is the entry point, typically index.html.
+	// Index defaults to index.html.
 	Index string
-	// BasePath is the externally mounted prefix ending in a slash (or / at root).
+	// BasePath is the URL mount prefix, for example /motus/.
 	BasePath string
+	// TemplateData provides optional extra values for index.html.
+	TemplateData map[string]any
 }
 
-// Handler serves assets with correct content types and an index fallback for browser navigation.
-// Mount it under a prefix using httpkit/prefix; API routes must be more specific.
+// Handler serves index for browser navigations and rejects missing static assets.
 func (s SPA) Handler() http.Handler {
 	index := s.Index
 	if index == "" {
@@ -36,6 +36,34 @@ func (s SPA) Handler() http.Handler {
 	if !strings.HasSuffix(base, "/") {
 		base += "/"
 	}
+	routePrefix := strings.TrimSuffix(base, "/")
+	values := map[string]any{"BaseHref": base, "RoutePrefix": routePrefix}
+	for key, val := range s.TemplateData {
+		values[key] = val
+	}
+	data, err := fs.ReadFile(s.Assets, index)
+	if err != nil {
+		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			http.Error(w, "app not built (run frontend build)", http.StatusServiceUnavailable)
+		})
+	}
+	tmpl, err := template.New(index).Parse(string(data))
+	if err != nil {
+		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			http.Error(w, "invalid SPA index template", http.StatusInternalServerError)
+		})
+	}
+	var rendered bytes.Buffer
+	if err := tmpl.Execute(&rendered, values); err != nil {
+		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			http.Error(w, "unable to render SPA index", http.StatusInternalServerError)
+		})
+	}
+	info, _ := fs.Stat(s.Assets, index)
+	modified := time.Time{}
+	if info != nil {
+		modified = info.ModTime()
+	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet && r.Method != http.MethodHead {
 			w.Header().Set("Allow", "GET, HEAD")
@@ -43,37 +71,17 @@ func (s SPA) Handler() http.Handler {
 			return
 		}
 		name := strings.TrimPrefix(r.URL.Path, "/")
-		if name == "" {
-			name = index
-		}
-		if !fs.ValidPath(name) {
+		if name != "" && name != index && (path.Ext(name) != "" || strings.Contains(name, "..")) {
 			http.NotFound(w, r)
 			return
 		}
-		data, err := fs.ReadFile(s.Assets, name)
-		if err != nil {
-			// Returning HTML for a missing JS/CSS asset would mask broken frontend builds.
-			if path.Ext(name) != "" || !strings.Contains(r.Header.Get("Accept"), "text/html") {
-				http.NotFound(w, r)
-				return
-			}
-			name = index
-			data, err = fs.ReadFile(s.Assets, index)
-			if err != nil {
-				http.NotFound(w, r)
-				return
-			}
+		accept := r.Header.Get("Accept")
+		if name != "" && name != index && accept != "" && !strings.Contains(accept, "text/html") {
+			http.NotFound(w, r)
+			return
 		}
-		if name == index {
-			data = bytes.ReplaceAll(data, []byte("{{.BaseHref}}"), []byte(base))
-			w.Header().Set("Cache-Control", "no-cache")
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		} else {
-			if contentType := mime.TypeByExtension(path.Ext(name)); contentType != "" {
-				w.Header().Set("Content-Type", contentType)
-			}
-			w.Header().Set("Cache-Control", "public, max-age=3600")
-		}
-		http.ServeContent(w, r, name, time.Time{}, bytes.NewReader(data))
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		http.ServeContent(w, r, index, modified, bytes.NewReader(rendered.Bytes()))
 	})
 }
