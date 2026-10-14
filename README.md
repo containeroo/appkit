@@ -47,6 +47,6 @@ curl http://127.0.0.1:8080/app/
 curl -i http://127.0.0.1:8081/healthz
 ```
 
-Proxy authentication may restrict immediate ingress peers with `proxy.TrustCIDRs` and `config.Proxy.TrustedCIDRs`.
+Proxy authentication restricts immediate ingress peers with `proxy.TrustCIDRs` and `config.Proxy.TrustedCIDRs`. A sole `*` explicitly allows every valid peer; mixing `*` with CIDRs is invalid. Use `*` only when a trusted ingress is the sole path to the application and removes untrusted identity headers.
 Use `httpauth.AuthorizeWithError` for authorization checks that can fail independently of access denial.
 `web.SPA` renders the entry point as a Go template, while `httpkit/assets.Static` serves static files.

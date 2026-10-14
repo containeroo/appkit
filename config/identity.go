@@ -4,7 +4,7 @@ import "github.com/containeroo/tinyflags"
 
 // Proxy holds optional deployment header overrides for a trusted identity proxy.
 type Proxy struct {
-	// TrustedCIDRs lists the only immediate peers permitted to assert identity headers.
+	// TrustedCIDRs lists allowed immediate peers; a sole "*" explicitly trusts all peers.
 	TrustedCIDRs []string
 	// UsernameHeaders are the incoming username header names, in priority order.
 	UsernameHeaders []string
@@ -44,7 +44,7 @@ var trustedGroupHeaders = []string{
 // RegisterProxy registers trusted-proxy identity header overrides.
 func RegisterProxy(tf *tinyflags.FlagSet, cfg *Proxy) {
 	tf.StringSliceVar(&cfg.TrustedCIDRs, "trusted-proxy-cidrs", nil,
-		"Trusted ingress peer CIDRs (required for proxy authentication)").
+		"Trusted ingress peer CIDRs, or * to explicitly trust every peer (unsafe without ingress isolation)").
 		Section(SectionProxy).Value()
 	tf.StringSliceVar(&cfg.UsernameHeaders, "trusted-username-headers",
 		trustedUsernameHeaders,
