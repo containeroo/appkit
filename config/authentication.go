@@ -39,8 +39,8 @@ func RegisterAuthentication(tf *tinyflags.FlagSet, cfg *Authentication, opts Aut
 		auth.ModeNone, auth.ModeLocal, auth.ModeProxy, auth.ModeTrustedProxy, auth.ModeOIDC).
 		Section(SectionAuthentication).
 		Placeholder("MODE")
-	registrationDefault := false
 
+	registrationDefault := false
 	registration := tf.BoolVar(&registrationDefault, "allow-user-registration", false,
 		"Deployment override for registration of external identities").
 		Section(SectionAuthentication).

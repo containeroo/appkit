@@ -18,6 +18,22 @@ type Proxy struct {
 	AdminGroup string
 }
 
+// OIDC holds deployment-managed OIDC secrets and optional runtime overrides.
+type OIDC struct {
+	// Issuer is the optional issuer override.
+	Issuer string
+	// ClientID is the optional client ID override.
+	ClientID string
+	// ClientSecret is the OIDC client secret.
+	ClientSecret string
+	// SessionSecret protects temporary login state and may be reused by application-managed sessions.
+	SessionSecret string
+	// GroupClaim is the optional external groups claim.
+	GroupClaim string
+	// AdminGroup is an optional external administrator group mapping input.
+	AdminGroup string
+}
+
 var trustedUsernameHeaders = []string{
 	"X-Forwarded-User",
 	"X-Auth-Request-User",
@@ -45,7 +61,9 @@ var trustedGroupHeaders = []string{
 func RegisterProxy(tf *tinyflags.FlagSet, cfg *Proxy) {
 	tf.StringSliceVar(&cfg.TrustedCIDRs, "trusted-proxy-cidrs", nil,
 		"Trusted ingress peer CIDRs, or * to explicitly trust every peer (unsafe without ingress isolation)").
-		Section(SectionProxy).Value()
+		Section(SectionProxy).
+		Value()
+
 	tf.StringSliceVar(&cfg.UsernameHeaders, "trusted-username-headers",
 		trustedUsernameHeaders,
 		"Trusted-proxy username headers").
@@ -70,22 +88,6 @@ func RegisterProxy(tf *tinyflags.FlagSet, cfg *Proxy) {
 	tf.StringVar(&cfg.AdminGroup, "trusted-admin-group", "", "External group granting administration access").
 		Section(SectionProxy).
 		Value()
-}
-
-// OIDC holds deployment-managed OIDC secrets and optional runtime overrides.
-type OIDC struct {
-	// Issuer is the optional issuer override.
-	Issuer string
-	// ClientID is the optional client ID override.
-	ClientID string
-	// ClientSecret is the OIDC client secret.
-	ClientSecret string
-	// SessionSecret protects temporary login state and may be reused by application-managed sessions.
-	SessionSecret string
-	// GroupClaim is the optional external groups claim.
-	GroupClaim string
-	// AdminGroup is an optional external administrator group mapping input.
-	AdminGroup string
 }
 
 // RegisterOIDC registers OIDC deployment settings with secret masking.
