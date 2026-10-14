@@ -42,6 +42,18 @@ func ValidateKey(value string) error {
 	return nil
 }
 
+// ParseKey decodes an optional base64-encoded 256-bit encryption key.
+func ParseKey(value string) ([]byte, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil, nil
+	}
+	if err := ValidateKey(value); err != nil {
+		return nil, err
+	}
+	return base64.StdEncoding.DecodeString(value)
+}
+
 // New constructs a cipher from an optional base64-encoded 256-bit key.
 func New(value string) (*Cipher, error) {
 	value = strings.TrimSpace(value)

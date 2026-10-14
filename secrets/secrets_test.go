@@ -44,3 +44,15 @@ func TestCipherUnconfiguredAndInvalidKey(t *testing.T) {
 		t.Fatal("invalid key accepted")
 	}
 }
+
+func TestParseKey(t *testing.T) {
+	value := base64.StdEncoding.EncodeToString([]byte("0123456789abcdef0123456789abcdef"))
+
+	key, err := ParseKey(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(key) != 32 {
+		t.Fatalf("key length: %d", len(key))
+	}
+}
