@@ -1,5 +1,5 @@
-github.com/containeroo/httpkit v0.0.1 h1:QAuvzTt5ueURo5LBpKG9HC5b/M40cM7Vh/jE3Yqcdlc=
-github.com/containeroo/httpkit v0.0.1/go.mod h1:2NRI1cA/PFtiM42RrEFcL6faKKLhI878X/R+pNLt+BA=
+github.com/containeroo/httpkit v0.0.3 h1:msDWnXu3fhAja9aOXfP6vw6GO803zHW9/lgp+cqOQQU=
+github.com/containeroo/httpkit v0.0.3/go.mod h1:3O+ot7igC5SMFIsVu7nZmBNewa4VbigOOu47eGR9qaI=
 github.com/containeroo/tinyflags v0.5.0 h1:FIt3Vwmwx2w7Lu8bUFTGGmWEx46zDybWnx3nCzT1nEc=
 github.com/containeroo/tinyflags v0.5.0/go.mod h1:5CGkQy0A+90ubNaEDJanfXOlE4+aYHp4OBwCpXM1yDM=
 github.com/coreos/go-oidc/v3 v3.21.0 h1:wZo4Q9Pum8dYEj0eMUPrqR+kvuGkeUplbLpNCkBqoWM=
@@ -14,5 +14,5 @@ golang.org/x/crypto v0.58.0 h1:COkYLr4k7nDI4r6QtMML2AfzeIswWHAJthLS6K/M/54=
 golang.org/x/crypto v0.58.0/go.mod h1:Xh+kl5A+M0gMiWDytH2Hhr5Z7WbNCpv/eB/EFgfSk+w=
 golang.org/x/oauth2 v0.37.0 h1:JUlcxA8oAtauLfiH8FX2/FkAWHAdi0QtGCGc+hofE98=
 golang.org/x/oauth2 v0.37.0/go.mod h1:IxwZNxUULJmpBFf9K/9NTMSIfZZuvuTy1gGxhigP/58=
-golang.org/x/sync v0.23.0 h1:KameEIfc1IkluZyXWLn39Wd4tURc6GbCiISGiZm2bQk=
-golang.org/x/sync v0.23.0/go.mod h1:sUUOizhqBxiL6pEWpqNLUiaJn1ShEbZ6BBqskPbjZm0=
+golang.org/x/sync v0.24.0 h1:iqiDrGoDgyuvAKrhLQthUEzU/R378N78gXbBjxed7oA=
+golang.org/x/sync v0.24.0/go.mod h1:sUUOizhqBxiL6pEWpqNLUiaJn1ShEbZ6BBqskPbjZm0=
