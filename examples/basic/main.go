@@ -73,7 +73,8 @@ func run(ctx context.Context, args []string) error {
 		cfg.Server.ListenAddress,
 		cfg.Server.ManagementListenAddress,
 		handlers,
-		logger.With("component", "server"),
+		logger.With("server", "application"),
+		logger.With("server", "management"),
 	); err != nil {
 		logger.Error("run server", "event", "server_run_failed", "error", err)
 		return err

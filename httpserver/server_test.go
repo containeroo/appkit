@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -68,9 +69,23 @@ func TestRunRejectsInvalidListeners(t *testing.T) {
 		{name: "missing management handler", appAddress: "127.0.0.1:8080", mgmtAddr: "127.0.0.1:8081", handlers: Handlers{Application: app}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			if err := Run(context.Background(), test.appAddress, test.mgmtAddr, test.handlers, nil); err == nil {
+			if err := Run(context.Background(), test.appAddress, test.mgmtAddr, test.handlers, nil, nil); err == nil {
 				t.Fatal("expected invalid listener configuration to fail")
 			}
 		})
+	}
+}
+
+func TestRunRejectsMissingManagementLogger(t *testing.T) {
+	err := Run(
+		context.Background(),
+		"127.0.0.1:8080",
+		"127.0.0.1:8081",
+		Handlers{Application: http.NotFoundHandler(), Management: http.NotFoundHandler()},
+		slog.Default(),
+		nil,
+	)
+	if err == nil {
+		t.Fatal("expected missing management logger to fail")
 	}
 }

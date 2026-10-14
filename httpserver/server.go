@@ -48,7 +48,8 @@ func Run(
 	applicationAddress string,
 	managementAddress string,
 	handlers Handlers,
-	logger *slog.Logger,
+	appLogger *slog.Logger,
+	mgmtLogger *slog.Logger,
 ) error {
 	if applicationAddress == "" {
 		return errors.New("application listen address is required")
@@ -56,24 +57,27 @@ func Run(
 	if handlers.Application == nil {
 		return errors.New("application handler is required")
 	}
-	if logger == nil {
-		logger = slog.Default()
+	if appLogger == nil {
+		return errors.New("application logger is required")
 	}
 
 	listeners := []kitserver.Listener{{
 		Address: applicationAddress,
 		Handler: handlers.Application,
-		Logger:  logger.With("server", "application"),
+		Logger:  appLogger,
 		Options: []grace.Option{grace.WithMaxHeaderValueCount(100)},
 	}}
 	if managementAddress != "" {
 		if handlers.Management == nil {
 			return errors.New("management handler is required when management listener is configured")
 		}
+		if mgmtLogger == nil {
+			return errors.New("management logger is required when management listener is configured")
+		}
 		listeners = append(listeners, kitserver.Listener{
 			Address: managementAddress,
 			Handler: handlers.Management,
-			Logger:  logger.With("server", "management"),
+			Logger:  mgmtLogger,
 			Options: []grace.Option{grace.WithMaxHeaderValueCount(100)},
 		})
 	}
