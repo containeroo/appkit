@@ -1,0 +1,10 @@
+.DS_Store
+.envrc
+.idea/
+.vscode/
+/.projectatlas/
+/build/
+/bin/*
+!/bin/dev-tools.mk
+/coverage.out
+
