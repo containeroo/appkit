@@ -22,7 +22,12 @@ func WithUser[User any](r *http.Request, user User) *http.Request {
 
 // CurrentUser returns the current authenticated application user.
 func CurrentUser[User any](r *http.Request) (User, bool) {
-	user, ok := r.Context().Value(contextKey[User]{}).(User)
+	return CurrentUserFromContext[User](r.Context())
+}
+
+// CurrentUserFromContext returns the authenticated application user in ctx.
+func CurrentUserFromContext[User any](ctx context.Context) (User, bool) {
+	user, ok := ctx.Value(contextKey[User]{}).(User)
 	return user, ok
 }
 

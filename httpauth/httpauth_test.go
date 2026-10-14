@@ -30,6 +30,18 @@ func TestRequireAndAuthorize(t *testing.T) {
 	}
 }
 
+func TestCurrentUserFromContext(t *testing.T) {
+	request := WithUser(httptest.NewRequest(http.MethodGet, "/", nil), user{Name: "alice"})
+
+	actual, ok := CurrentUserFromContext[user](request.Context())
+	if !ok {
+		t.Fatal("user missing from context")
+	}
+	if actual.Name != "alice" {
+		t.Fatalf("user name: %q", actual.Name)
+	}
+}
+
 func TestAuthenticateErrors(t *testing.T) {
 	cases := []struct {
 		failure error
