@@ -54,7 +54,8 @@ return httpserver.Run(
 	server.ListenAddress,
 	server.ManagementListenAddress,
 	handlers,
-	logger.With("component", "server"),
+	logger.With("server", "application"),
+	logger.With("server", "management"),
 )
 ```
 
