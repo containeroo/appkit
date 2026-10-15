@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/containeroo/appkit/config"
 	"github.com/containeroo/appkit/httpserver"
 	"github.com/containeroo/appkit/logging"
+	server "github.com/containeroo/httpkit/grace"
 )
 
 // applicationConfig holds the reusable deployment configuration for this example.
@@ -25,15 +24,20 @@ type applicationConfig struct {
 // parse registers the shared flags and resolves the final application configuration.
 func parse(args []string) (applicationConfig, error) {
 	var cfg applicationConfig
+
 	flags := config.NewFlagSet("basic", "BASIC", "dev")
 	flags.SectionOrder(config.SectionServer, config.SectionLogging)
+
 	finishServer := config.RegisterServer(flags, &cfg.Server, config.ServerOptions{})
 	finishLogging := config.RegisterLogging(flags, &cfg.Logging)
+
 	if err := flags.Parse(args); err != nil {
 		return applicationConfig{}, err
 	}
+
 	finishServer()
 	finishLogging()
+
 	return cfg, nil
 }
 
@@ -65,8 +69,14 @@ func run(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	logger := logging.Setup(cfg.Logging.Format, cfg.Logging.Debug, os.Stdout)
 	serverConfig := newServerConfig(cfg)
+
+	// Bind the process lifetime to operating-system shutdown signals.
+	ctx, stop := server.SignalContext(ctx)
+	defer stop()
+
 	handlers := httpserver.New(serverConfig)
 	if err := httpserver.Run(
 		ctx,
@@ -79,14 +89,13 @@ func run(ctx context.Context, args []string) error {
 		logger.Error("run server", "event", "server_run_failed", "error", err)
 		return err
 	}
+
 	return nil
 }
 
 // main runs the server until interrupted and reports startup or runtime failures.
 func main() {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-	if err := run(ctx, os.Args[1:]); err != nil {
+	if err := run(context.Background(), os.Args[1:]); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

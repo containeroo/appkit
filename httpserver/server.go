@@ -33,12 +33,17 @@ type Handlers struct {
 // New constructs independent HTTP handlers; only application routes use the route prefix.
 func New(config Config) Handlers {
 	var handlers Handlers
+
 	if config.Application != nil {
 		handlers.Application = prefix.MountUnderPrefixWithOptions(
-			config.Application, config.RoutePrefix, prefix.WithRedirectRewriting(),
+			config.Application,
+			config.RoutePrefix,
+			prefix.WithRedirectRewriting(),
 		)
 	}
+
 	handlers.Management = config.Management
+
 	return handlers
 }
 
@@ -67,6 +72,7 @@ func Run(
 		Logger:  appLogger,
 		Options: []grace.Option{grace.WithMaxHeaderValueCount(100)},
 	}}
+
 	if managementAddress != "" {
 		if handlers.Management == nil {
 			return errors.New("management handler is required when management listener is configured")
@@ -81,5 +87,6 @@ func Run(
 			Options: []grace.Option{grace.WithMaxHeaderValueCount(100)},
 		})
 	}
+
 	return kitserver.Run(ctx, listeners...)
 }

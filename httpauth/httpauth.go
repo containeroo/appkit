@@ -8,6 +8,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/containeroo/appkit/auth"
 )
@@ -84,17 +85,15 @@ func isLocalPath(path string) bool {
 
 // containsBackslash rejects ambiguous redirect paths across URL parsers.
 func containsBackslash(path string) bool {
-	for i := range path {
-		if path[i] == '\\' {
-			return true
-		}
-	}
-	return false
+	return strings.ContainsRune(path, '\\')
 }
 
 // Require tries authenticators in order, passes the resolved user to the next handler,
 // and distinguishes expected denial from unexpected authentication failure.
-func Require[User any](onFailure OnFailure, authenticators ...auth.Authenticator[User]) func(http.Handler) http.Handler {
+func Require[User any](
+	onFailure OnFailure,
+	authenticators ...auth.Authenticator[User],
+) func(http.Handler) http.Handler {
 	if onFailure == nil {
 		onFailure = JSONFailure
 	}
@@ -129,7 +128,10 @@ func Require[User any](onFailure OnFailure, authenticators ...auth.Authenticator
 }
 
 // Authorize applies application-owned authorization policy to the resolved user.
-func Authorize[User any](allowed func(*http.Request, User) bool, onFailure OnFailure) func(http.Handler) http.Handler {
+func Authorize[User any](
+	allowed func(*http.Request, User) bool,
+	onFailure OnFailure,
+) func(http.Handler) http.Handler {
 	if onFailure == nil {
 		onFailure = JSONFailure
 	}
@@ -151,12 +153,9 @@ func Authorize[User any](allowed func(*http.Request, User) bool, onFailure OnFai
 
 // containsControl reports whether a redirect target includes forbidden control characters.
 func containsControl(path string) bool {
-	for _, ch := range path {
-		if ch < 0x20 || ch == 0x7f {
-			return true
-		}
-	}
-	return false
+	return strings.ContainsFunc(path, func(ch rune) bool {
+		return ch < 0x20 || ch == 0x7f
+	})
 }
 
 // OnPolicyError reports an authorization infrastructure failure without exposing its cause to clients.
@@ -164,7 +163,11 @@ type OnPolicyError func(http.ResponseWriter, *http.Request, error)
 
 // AuthorizeWithError applies persisted authorization policy without hiding database failures.
 // Denial returns HTTP 403 while unexpected failures are handled separately.
-func AuthorizeWithError[User any](allowed func(*http.Request, User) (bool, error), onFailure OnFailure, onError OnPolicyError) func(http.Handler) http.Handler {
+func AuthorizeWithError[User any](
+	allowed func(*http.Request, User) (bool, error),
+	onFailure OnFailure,
+	onError OnPolicyError,
+) func(http.Handler) http.Handler {
 	if onFailure == nil {
 		onFailure = JSONFailure
 	}
