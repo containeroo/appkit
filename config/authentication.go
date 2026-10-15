@@ -38,7 +38,7 @@ type AuthenticationOptions struct {
 func RegisterAuthentication(tf *tinyflags.FlagSet, cfg *Authentication, opts AuthenticationOptions) func() {
 	mode := tinyflags.Enum(tf, "auth-mode", auth.ModeNone,
 		"Emergency override for persisted authentication mode",
-		auth.ModeNone, auth.ModeLocal, auth.ModeProxy, auth.ModeTrustedProxy, auth.ModeOIDC).
+		auth.ModeNone, auth.ModeLocal, auth.ModeProxy, auth.ModeOIDC).
 		Section(SectionAuthentication).
 		Placeholder("MODE")
 

@@ -25,8 +25,6 @@ const (
 	ModeNone Mode = "none"
 	// ModeLocal uses application local credentials and server-side sessions.
 	ModeLocal Mode = "local"
-	// ModeTrustedProxy supports deployments using the older trusted-proxy value.
-	ModeTrustedProxy Mode = "trusted-proxy"
 	// ModeProxy uses identities asserted by an independently trusted reverse proxy.
 	ModeProxy Mode = "proxy"
 	// ModeOIDC uses an OpenID Connect provider.
