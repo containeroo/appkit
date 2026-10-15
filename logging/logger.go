@@ -1,3 +1,4 @@
+// Package logging creates application loggers with a small, deployment-friendly configuration surface.
 package logging
 
 import (
@@ -9,11 +10,14 @@ import (
 type LogFormat string
 
 const (
+	// LogFormatText writes human-readable, key-value log records.
 	LogFormatText LogFormat = "text"
+	// LogFormatJSON writes structured JSON log records for log aggregation systems.
 	LogFormatJSON LogFormat = "json"
 )
 
 // Setup creates a structured logger for the selected format and level.
+// Unknown formats use JSON so production logs remain machine-readable.
 func Setup(format LogFormat, debug bool, output io.Writer) *slog.Logger {
 	options := &slog.HandlerOptions{}
 

@@ -36,6 +36,9 @@ const (
 // Authenticator resolves the application's own user type from an HTTP request.
 // Returning ErrUnauthenticated allows another authenticator to be tried.
 type Authenticator[User any] interface {
+	// Authenticate returns the application user represented by the request.
+	// It returns ErrUnauthenticated when no usable credentials are present, which
+	// allows middleware to try a later authenticator; other errors stop the chain.
 	Authenticate(*http.Request) (User, error)
 }
 

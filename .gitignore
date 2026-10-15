@@ -7,4 +7,7 @@
 /bin/*
 !/bin/dev-tools.mk
 /coverage.out
+/docs/site/
+.dev-ports.json
+.dev-ports.json.lock
 

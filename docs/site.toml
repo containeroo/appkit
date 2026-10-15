@@ -1,0 +1,14 @@
+site_name = "appkit"
+site_url = "https://containeroo.github.io/appkit/"
+source_dir = "docs/content"
+output_dir = "docs/site"
+theme = "Light"
+language = "en"
+robots = "allow"
+
+[[external_links]]
+label = "Repository"
+url = "https://github.com/containeroo/appkit"
+description = "GitHub"
+hover_text = "{{label}} | {{description}}"
+

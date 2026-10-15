@@ -32,7 +32,9 @@ type AuthenticationOptions struct {
 }
 
 // RegisterAuthentication registers common authentication override flags.
-// The nil-versus-explicit-false distinction is preserved for registration.
+// Call the returned finalizer after parsing flags to preserve the distinction
+// between an absent override and an explicit false value. It does not select an
+// application's persisted authentication policy.
 func RegisterAuthentication(tf *tinyflags.FlagSet, cfg *Authentication, opts AuthenticationOptions) func() {
 	mode := tinyflags.Enum(tf, "auth-mode", auth.ModeNone,
 		"Emergency override for persisted authentication mode",
