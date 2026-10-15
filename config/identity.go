@@ -54,16 +54,19 @@ func RegisterProxy(tf *tinyflags.FlagSet, cfg *Proxy) {
 	tf.StringSliceVar(&cfg.EmailHeaders, "trusted-email-headers",
 		defaults.EmailHeaders,
 		"Trusted-proxy email headers").
+		AllowEmpty().
 		Section(SectionProxy).
 		Value()
 	tf.StringSliceVar(&cfg.DisplayNameHeaders, "trusted-display-name-headers",
 		defaults.DisplayNameHeaders,
 		"Trusted-proxy display name headers").
 		Section(SectionProxy).
+		AllowEmpty().
 		Value()
 	tf.StringSliceVar(&cfg.GroupHeaders, "trusted-group-headers",
 		defaults.GroupHeaders,
 		"Trusted-proxy group headers").
+		AllowEmpty().
 		Section(SectionProxy).
 		Value()
 	tf.StringVar(&cfg.AdminGroup, "trusted-admin-group", "", "External group granting administration access").
