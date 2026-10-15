@@ -41,8 +41,8 @@ func (a Authenticator[User]) Validate() error {
 	if a.Trust == nil || a.Resolve == nil {
 		return errors.New("trusted proxy requires trust check and identity resolver")
 	}
-	if a.Issuer == "" || len(a.UsernameHeaders) == 0 {
-		return errors.New("trusted proxy requires issuer and username headers")
+	if a.Issuer == "" || (len(a.UsernameHeaders) == 0 && len(a.EmailHeaders) == 0) {
+		return errors.New("trusted proxy requires issuer and username or email headers")
 	}
 	return nil
 }
@@ -57,12 +57,16 @@ func (a Authenticator[User]) Authenticate(r *http.Request) (User, error) {
 		return zero, auth.ErrUnauthenticated
 	}
 	username := firstHeader(r, a.UsernameHeaders)
+	email := firstHeader(r, a.EmailHeaders)
+	if username == "" {
+		username = email
+	}
 	if username == "" {
 		return zero, auth.ErrUnauthenticated
 	}
 	identity := auth.ExternalIdentity{
 		Issuer: a.Issuer, Subject: username, Username: username,
-		Email: firstHeader(r, a.EmailHeaders), DisplayName: firstHeader(r, a.DisplayNameHeaders),
+		Email: email, DisplayName: firstHeader(r, a.DisplayNameHeaders),
 		Groups: groups(firstHeader(r, a.GroupHeaders)),
 	}
 	return a.Resolve(r.Context(), identity)

@@ -1,11 +1,13 @@
 package config
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/containeroo/appkit/auth"
+	"github.com/containeroo/appkit/auth/proxy"
 	"github.com/containeroo/appkit/logging"
 )
 
@@ -60,5 +62,43 @@ func TestUnsetOverridesRemainNil(t *testing.T) {
 	finalize()
 	if cfg.ModeOverride != nil || cfg.AllowRegistrationOverride != nil {
 		t.Fatalf("unset flags became overrides: %#v", cfg)
+	}
+}
+
+// TestProxyDefaultsAreFrameworkOwned checks that flags and the resolver share one source of defaults.
+func TestProxyDefaultsAreFrameworkOwned(t *testing.T) {
+	flags := NewFlagSet("example", "EXAMPLE", "test")
+	var cfg Proxy
+	RegisterProxy(flags, &cfg)
+	if err := flags.Parse(nil); err != nil {
+		t.Fatal(err)
+	}
+	defaults := proxy.Defaults()
+	if !reflect.DeepEqual(cfg.UsernameHeaders, defaults.UsernameHeaders) || !reflect.DeepEqual(cfg.EmailHeaders, defaults.EmailHeaders) {
+		t.Fatalf("flag defaults differ from proxy defaults: %#v", cfg)
+	}
+	layer := cfg.DeploymentOverrides(flags.Overrides())
+	if layer.UsernameHeaders != nil || layer.EmailHeaders != nil || layer.TrustedCIDRs != nil {
+		t.Fatalf("defaults incorrectly became deployment overrides: %#v", layer)
+	}
+}
+
+// TestProxyDeploymentOverridesRetainExplicitPresence checks the flag origin-aware adapter.
+func TestProxyDeploymentOverridesRetainExplicitPresence(t *testing.T) {
+	flags := NewFlagSet("example", "EXAMPLE", "test")
+	var cfg Proxy
+	RegisterProxy(flags, &cfg)
+	if err := flags.Parse([]string{"--trusted-proxy-cidrs=*", "--trusted-email-headers=X-Auth-Request-Email"}); err != nil {
+		t.Fatal(err)
+	}
+	layer := cfg.DeploymentOverrides(flags.Overrides())
+	if layer.TrustedCIDRs == nil || !reflect.DeepEqual(*layer.TrustedCIDRs, []string{"*"}) {
+		t.Fatalf("CIDR override not detected: %#v", layer)
+	}
+	if layer.EmailHeaders == nil || !reflect.DeepEqual(*layer.EmailHeaders, []string{"X-Auth-Request-Email"}) {
+		t.Fatalf("email override not detected: %#v", layer)
+	}
+	if layer.UsernameHeaders != nil {
+		t.Fatalf("default username headers incorrectly overridden: %#v", layer)
 	}
 }

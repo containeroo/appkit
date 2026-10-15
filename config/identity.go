@@ -1,8 +1,11 @@
 package config
 
-import "github.com/containeroo/tinyflags"
+import (
+	"github.com/containeroo/appkit/auth/proxy"
+	"github.com/containeroo/tinyflags"
+)
 
-// Proxy holds optional deployment header overrides for a trusted identity proxy.
+// Proxy contains parsed deployment flags; DeploymentOverrides identifies explicit values.
 type Proxy struct {
 	// TrustedCIDRs lists allowed immediate peers; a sole "*" explicitly trusts all peers.
 	TrustedCIDRs []string
@@ -34,60 +37,68 @@ type OIDC struct {
 	AdminGroup string
 }
 
-var trustedUsernameHeaders = []string{
-	"X-Forwarded-User",
-	"X-Auth-Request-User",
-	"Remote-User",
-}
-
-var trustedEmailHeaders = []string{
-	"X-Forwarded-Email",
-	"X-Auth-Request-Email",
-	"X-Authentik-Email",
-}
-
-var trustedDisplayNameHeaders = []string{
-	"X-Forwarded-Name",
-	"X-Auth-Request-Preferred-Username",
-	"X-Authentik-Name",
-}
-
-var trustedGroupHeaders = []string{
-	"X-Forwarded-Groups",
-	"X-Auth-Request-Groups",
-}
-
 // RegisterProxy registers trusted-proxy identity header overrides.
 func RegisterProxy(tf *tinyflags.FlagSet, cfg *Proxy) {
+	defaults := proxy.Defaults()
 	tf.StringSliceVar(&cfg.TrustedCIDRs, "trusted-proxy-cidrs", nil,
 		"Trusted ingress peer CIDRs, or * to explicitly trust every peer (unsafe without ingress isolation)").
 		Section(SectionProxy).
 		Value()
 
 	tf.StringSliceVar(&cfg.UsernameHeaders, "trusted-username-headers",
-		trustedUsernameHeaders,
+		defaults.UsernameHeaders,
 		"Trusted-proxy username headers").
 		Section(SectionProxy).
 		Value()
 
 	tf.StringSliceVar(&cfg.EmailHeaders, "trusted-email-headers",
-		trustedEmailHeaders,
+		defaults.EmailHeaders,
 		"Trusted-proxy email headers").
 		Section(SectionProxy).
 		Value()
 	tf.StringSliceVar(&cfg.DisplayNameHeaders, "trusted-display-name-headers",
-		trustedDisplayNameHeaders,
+		defaults.DisplayNameHeaders,
 		"Trusted-proxy display name headers").
 		Section(SectionProxy).
 		Value()
 	tf.StringSliceVar(&cfg.GroupHeaders, "trusted-group-headers",
-		trustedGroupHeaders,
+		defaults.GroupHeaders,
 		"Trusted-proxy group headers").
 		Section(SectionProxy).
 		Value()
 	tf.StringVar(&cfg.AdminGroup, "trusted-admin-group", "", "External group granting administration access").
 		Section(SectionProxy).
 		Value()
+}
+
+// DeploymentOverrides returns explicitly selected flag or environment settings.
+// Values omitted from overrides are inherited from persisted settings and appkit defaults.
+// A present key with an empty list intentionally clears that header list.
+func (cfg Proxy) DeploymentOverrides(overrides tinyflags.Overrides) proxy.Layer {
+	values := overrides.Values()
+	var layer proxy.Layer
+	if _, ok := values["trusted-proxy-cidrs"]; ok {
+		layer.TrustedCIDRs = copyHeaders(cfg.TrustedCIDRs)
+	}
+	if _, ok := values["trusted-username-headers"]; ok {
+		layer.UsernameHeaders = copyHeaders(cfg.UsernameHeaders)
+	}
+	if _, ok := values["trusted-email-headers"]; ok {
+		layer.EmailHeaders = copyHeaders(cfg.EmailHeaders)
+	}
+	if _, ok := values["trusted-display-name-headers"]; ok {
+		layer.DisplayNameHeaders = copyHeaders(cfg.DisplayNameHeaders)
+	}
+	if _, ok := values["trusted-group-headers"]; ok {
+		layer.GroupHeaders = copyHeaders(cfg.GroupHeaders)
+	}
+	return layer
+}
+
+// copyHeaders returns a distinct slice pointer, including for explicitly empty lists.
+func copyHeaders(headers []string) *[]string {
+	cloned := append([]string{}, headers...)
+	return &cloned
 }
 
 // RegisterOIDC registers OIDC deployment settings with secret masking.
