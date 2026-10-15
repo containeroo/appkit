@@ -6,9 +6,6 @@
 # renovate: datasource=github-releases depName=gi8lino/dev-tools
 DEV_TOOLS_VERSION ?= v0.9.0
 
- # renovate: datasource=github-releases depName=kumbuka-me/kumbuka
-KUMBUKA_VERSION ?= v0.47.1
-
 # renovate: datasource=github-releases depName=kumbuka-me/cli
 KUMBUKA_CLI_VERSION ?= v0.11.11
 
@@ -19,7 +16,7 @@ SITE_OUTPUT := $(DOCS_DIR)/site
 SITE_PORT ?= $(call dev-port,site)
 # Use recursive expansion: dev-port is supplied by an included dev-tools module
 # further down in this file.
-SITE_URL = http://127.0.0.1:$(SITE_PORT)/
+SITE_URL := http://127.0.0.1:$(SITE_PORT)/
 SITE_PLUGINS := $(DOCS_DIR)/.kumbukaplugins
 PYTHON ?= python3
 
