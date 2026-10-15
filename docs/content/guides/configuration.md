@@ -8,6 +8,7 @@ The `config` package registers reusable deployment flags with `tinyflags`; it de
 | --- | --- |
 | `RegisterServer` | Application and management listener addresses plus an optional route prefix. |
 | `RegisterLogging` | Text or JSON structured logging and debug level. |
+| `RegisterLogFormat` | Only the shared text/JSON format flag for CLI commands without server diagnostics. |
 | `RegisterAuthentication` | Emergency mode, recovery login, encryption key, and optional session lifetime overrides. |
 | `RegisterProxy` | Trusted-proxy CIDRs and identity-header overrides. |
 | `RegisterOIDC` | Provider credentials and callback deployment settings. |
@@ -33,6 +34,18 @@ finishAuthentication()
 ```
 
 For example, `ModeOverride == nil` means deployment did not select a mode; a non-nil value means it did. The same distinction applies to `AllowRegistrationOverride`, including an explicit `false`.
+
+CLI commands that only need structured output can register the format without adding `--debug` or `--access-log`:
+
+```go
+var format logging.LogFormat
+finishLogFormat := config.RegisterLogFormat(flags, &format)
+
+if err := flags.Parse(os.Args[1:]); err != nil {
+	return err
+}
+finishLogFormat()
+```
 
 ## Secrets and logs
 

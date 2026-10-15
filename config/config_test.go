@@ -52,6 +52,23 @@ func TestComposableFlagGroups(t *testing.T) {
 	}
 }
 
+func TestRegisterLogFormatAddsOnlyTheSharedFormatFlag(t *testing.T) {
+	t.Parallel()
+
+	flags := NewFlagSet("example", "EXAMPLE", "test")
+	var format logging.LogFormat
+	finalize := RegisterLogFormat(flags, &format)
+
+	if err := flags.Parse([]string{"--log-format", "text"}); err != nil {
+		t.Fatal(err)
+	}
+	finalize()
+
+	if format != logging.LogFormatText {
+		t.Fatalf("log format = %q, want %q", format, logging.LogFormatText)
+	}
+}
+
 func TestUnsetOverridesRemainNil(t *testing.T) {
 	tf := NewFlagSet("example", "EXAMPLE", "test")
 	var cfg Authentication

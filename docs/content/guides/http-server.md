@@ -6,9 +6,11 @@ Keep browser or API traffic separate from operational traffic. `httpserver.New` 
 app := http.NewServeMux()
 app.HandleFunc("GET /", home)
 
-management := http.NewServeMux()
-management.HandleFunc("GET /healthz", health)
-management.HandleFunc("GET /readyz", readiness)
+management := httpserver.NewManagement(httpserver.ManagementRoutes{
+	Health:    http.HandlerFunc(health),
+	Readiness: http.HandlerFunc(readiness),
+	Metrics:   prometheusHandler,
+})
 
 handlers := httpserver.New(httpserver.Config{
 	Application: app,
@@ -20,11 +22,14 @@ if err := httpserver.Run(
 	cfg.Server.ListenAddress,
 	cfg.Server.ManagementListenAddress,
 	handlers,
-	logger.With("component", "server"),
+	logger.With("server", "application"),
+	logger.With("server", "management"),
 ); err != nil {
 	return err
 }
 ```
+
+`NewManagement` registers `GET /healthz`, `GET /readyz`, and, when supplied, `GET /metrics`. Go's HTTP router also accepts `HEAD` for these routes and returns `405 Method Not Allowed` for other methods. Omitted handlers are not registered.
 
 The runnable [`examples/basic`](https://github.com/containeroo/appkit/tree/main/examples/basic) program adds common flags, structured logging, graceful shutdown, and both listeners:
 

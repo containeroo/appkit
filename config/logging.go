@@ -15,13 +15,14 @@ type Logging struct {
 	AccessLog bool
 }
 
+// RegisterLogFormat adds the shared log-format flag without server-specific logging flags.
+func RegisterLogFormat(tf *tinyflags.FlagSet, format *logging.LogFormat) func() {
+	return registerLogFormat(tf, format, "")
+}
+
 // RegisterLogging adds logging flags, returning a finalizer for the enum value.
 func RegisterLogging(tf *tinyflags.FlagSet, cfg *Logging) func() {
-	format := tinyflags.Enum(tf, "log-format", logging.LogFormatJSON, "Log output format",
-		logging.LogFormatText, logging.LogFormatJSON).
-		Section(SectionLogging).
-		Short("l").Placeholder("FORMAT").
-		Value()
+	finalizeFormat := registerLogFormat(tf, &cfg.Format, SectionLogging)
 
 	tf.BoolVar(&cfg.Debug, "debug", false, "Enable verbose diagnostic logging").
 		Section(SectionLogging).
@@ -31,5 +32,18 @@ func RegisterLogging(tf *tinyflags.FlagSet, cfg *Logging) func() {
 	tf.BoolVar(&cfg.AccessLog, "access-log", false, "Enable HTTP request logging").
 		Section(SectionLogging).
 		Value()
-	return func() { cfg.Format = *format }
+	return finalizeFormat
+}
+
+// registerLogFormat adds the shared enum and optionally places it in a flag section.
+func registerLogFormat(tf *tinyflags.FlagSet, format *logging.LogFormat, section string) func() {
+	flag := tinyflags.Enum(tf, "log-format", logging.LogFormatJSON, "Log output format",
+		logging.LogFormatText, logging.LogFormatJSON).
+		Short("l").
+		Placeholder("FORMAT")
+	if section != "" {
+		flag.Section(section)
+	}
+	value := flag.Value()
+	return func() { *format = *value }
 }

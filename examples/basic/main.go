@@ -48,12 +48,13 @@ func newServerConfig(cfg applicationConfig) httpserver.Config {
 		_, _ = fmt.Fprintln(w, "Hello from appkit!")
 	})
 
-	management := http.NewServeMux()
-	management.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusNoContent)
-	})
-	management.HandleFunc("GET /readyz", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusNoContent)
+	management := httpserver.NewManagement(httpserver.ManagementRoutes{
+		Health: http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusNoContent)
+		}),
+		Readiness: http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusNoContent)
+		}),
 	})
 
 	return httpserver.Config{
