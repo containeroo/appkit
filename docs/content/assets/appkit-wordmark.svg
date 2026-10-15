@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 236 80" width="236" height="80" role="img" aria-labelledby="title desc">
+  <title id="title">appkit</title>
+  <desc id="desc">The appkit cube logo followed by the appkit wordmark.</desc>
+  <g transform="scale(.3125)">
+    <path fill="#1262FF" d="M 119.340 17.557 Q 128.000 12.557 136.660 17.557 L 214.179 62.312 Q 222.839 67.312 214.179 72.312 L 136.660 117.068 Q 128.000 122.068 119.340 117.068 L 41.821 72.312 Q 33.161 67.312 41.821 62.312 Z"/>
+    <path fill="#0847F7" d="M 30.081 82.648 Q 30.081 72.648 38.741 77.648 L 116.259 122.403 Q 124.919 127.403 124.919 137.403 L 124.919 226.914 Q 124.919 236.914 116.259 231.914 L 38.741 187.159 Q 30.081 182.159 30.081 172.159 Z"/>
+    <path fill="#80A7FF" d="M 131.081 137.403 Q 131.081 127.403 139.741 122.403 L 217.259 77.648 Q 225.919 72.648 225.919 82.648 L 225.919 172.159 Q 225.919 182.159 217.259 187.159 L 139.741 231.914 Q 131.081 236.914 131.081 226.914 Z"/>
+  </g>
+  <text x="91" y="51" fill="currentColor" font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="40" font-weight="700" letter-spacing="-1.4">appkit</text>
+</svg>

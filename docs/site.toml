@@ -5,10 +5,13 @@ output_dir = "docs/site"
 theme = "Light"
 language = "en"
 robots = "allow"
+# The header uses a wordmark; the favicon remains the compact cube mark.
+logo = "content/assets/appkit-wordmark.svg"
+favicon = "content/assets/appkit.svg"
 
 [[external_links]]
 label = "Repository"
 url = "https://github.com/containeroo/appkit"
+icon = "github-simple"
 description = "GitHub"
 hover_text = "{{label}} | {{description}}"
-
