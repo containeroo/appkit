@@ -35,6 +35,38 @@ finishAuthentication()
 
 For example, `ModeOverride == nil` means deployment did not select a mode; a non-nil value means it did. The same distinction applies to `AllowRegistrationOverride`, including an explicit `false`.
 
+Applications can register only the authentication flags they use. The mode and
+registration overrides each return a finalizer; the other flags do not.
+
+```go
+var authentication config.Authentication
+finishMode := config.RegisterAuthMode(flags, &authentication)
+finishRegistration := config.RegisterUserRegistration(flags, &authentication)
+config.RegisterLocalLogin(flags, &authentication)
+// Optionally: config.RegisterEncryptionKey(flags, &authentication)
+// Optionally: config.RegisterSessionLifetime(flags, &authentication, 12*time.Hour)
+
+if err := flags.Parse(os.Args[1:]); err != nil {
+	return err
+}
+finishMode()
+finishRegistration()
+```
+
+`RegisterAuthentication` remains available for applications using the full group.
+
+The other groups also have individual registration functions:
+
+- Server: `RegisterRoutePrefix`, `RegisterListenAddress`, `RegisterManagementListenAddress`, and `RegisterPublicURL`. Call the listener finalizers after parsing.
+- PostgreSQL: `RegisterDatabaseURL`, `RegisterDatabaseMaxConns`, and `RegisterDatabaseMinIdleConns`.
+- Logging: `RegisterLogFormat`, `RegisterDebug`, and `RegisterAccessLog`. Call the format finalizer after parsing.
+- Observability: `RegisterDisableMetrics` and `RegisterPerformanceDiagnostics`.
+- OpenTelemetry: `RegisterOTelServiceName`, `RegisterOTelEndpoint`, and `RegisterOTelInsecure`. The insecure flag requires the endpoint flag.
+- Proxy: `RegisterTrustedProxyCIDRs`, `RegisterTrustedUsernameHeaders`, `RegisterTrustedEmailHeaders`, `RegisterTrustedDisplayNameHeaders`, `RegisterTrustedGroupHeaders`, and `RegisterTrustedAdminGroup`.
+- OIDC: `RegisterOIDCIssuer`, `RegisterOIDCClientID`, `RegisterOIDCClientSecret`, `RegisterOIDCSessionSecret`, `RegisterOIDCGroupClaim`, and `RegisterOIDCAdminGroup`.
+
+Group helpers remain available; don't register the same flag both individually and through a group.
+
 CLI commands that only need structured output can register the format without adding `--debug` or `--access-log`:
 
 ```go

@@ -36,53 +36,84 @@ type AuthenticationOptions struct {
 // between an absent override and an explicit false value. It does not select an
 // application's persisted authentication policy.
 func RegisterAuthentication(tf *tinyflags.FlagSet, cfg *Authentication, opts AuthenticationOptions) func() {
+	finalizeMode := RegisterAuthMode(tf, cfg)
+	finalizeRegistration := RegisterUserRegistration(tf, cfg)
+	RegisterLocalLogin(tf, cfg)
+	RegisterEncryptionKey(tf, cfg)
+	if opts.RegisterSessionLifetime {
+		RegisterSessionLifetime(tf, cfg, opts.DefaultSessionLifetime)
+	}
+	return func() {
+		finalizeMode()
+		finalizeRegistration()
+	}
+}
+
+// RegisterAuthMode registers the optional authentication mode override.
+// Call the returned finalizer after parsing.
+func RegisterAuthMode(tf *tinyflags.FlagSet, cfg *Authentication) func() {
 	mode := tinyflags.Enum(tf, "auth-mode", auth.ModeNone,
 		"Emergency override for persisted authentication mode",
 		auth.ModeNone, auth.ModeLocal, auth.ModeProxy, auth.ModeOIDC).
 		Section(SectionAuthentication).
 		Placeholder("MODE")
 
+	return func() {
+		if mode.Changed() {
+			selected := *mode.Value()
+			cfg.ModeOverride = &selected
+		}
+	}
+}
+
+// RegisterUserRegistration registers the optional registration override.
+// Call the returned finalizer after parsing.
+func RegisterUserRegistration(tf *tinyflags.FlagSet, cfg *Authentication) func() {
 	registrationDefault := false
 	registration := tf.BoolVar(&registrationDefault, "allow-user-registration", false,
 		"Deployment override for registration of external identities").
 		Section(SectionAuthentication).
 		Strict()
 
+	return func() {
+		if registration.Changed() {
+			selected := *registration.Value()
+			cfg.AllowRegistrationOverride = &selected
+		}
+	}
+}
+
+// RegisterLocalLogin registers the local recovery login flag.
+func RegisterLocalLogin(tf *tinyflags.FlagSet, cfg *Authentication) {
 	tf.BoolVar(&cfg.LocalLogin, "local-login", false,
 		"Enable local recovery login alongside the selected authentication mode").
 		Section(SectionAuthentication).
 		Value()
+}
 
+// RegisterEncryptionKey registers the application encryption key flag.
+func RegisterEncryptionKey(tf *tinyflags.FlagSet, cfg *Authentication) {
 	tf.StringVar(&cfg.EncryptionKey, "encryption-key", "",
 		"Base64-encoded 32-byte application encryption key").
 		Section(SectionAuthentication).
 		OverriddenValueMaskFn(tinyflags.MaskFirstLast).
 		Validate(secrets.ValidateKey).
 		Value()
+}
 
-	if opts.RegisterSessionLifetime {
-		lifetime := opts.DefaultSessionLifetime
-		if lifetime <= 0 {
-			lifetime = 12 * time.Hour
-		}
-		tf.DurationVar(&cfg.SessionLifetime, "session-lifetime", lifetime,
-			"Authentication session lifetime").Section(SectionAuthentication).
-			Validate(func(value time.Duration) error {
-				if value <= 0 {
-					return errors.New("session lifetime must be positive")
-				}
-				return nil
-			}).
-			Value()
+// RegisterSessionLifetime registers a positive session lifetime with a default.
+// A non-positive default selects 12 hours.
+func RegisterSessionLifetime(tf *tinyflags.FlagSet, cfg *Authentication, defaultLifetime time.Duration) {
+	if defaultLifetime <= 0 {
+		defaultLifetime = 12 * time.Hour
 	}
-	return func() {
-		if mode.Changed() {
-			selected := *mode.Value()
-			cfg.ModeOverride = &selected
-		}
-		if registration.Changed() {
-			selected := *registration.Value()
-			cfg.AllowRegistrationOverride = &selected
-		}
-	}
+	tf.DurationVar(&cfg.SessionLifetime, "session-lifetime", defaultLifetime,
+		"Authentication session lifetime").Section(SectionAuthentication).
+		Validate(func(value time.Duration) error {
+			if value <= 0 {
+				return errors.New("session lifetime must be positive")
+			}
+			return nil
+		}).
+		Value()
 }

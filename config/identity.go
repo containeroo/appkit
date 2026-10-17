@@ -39,20 +39,37 @@ type OIDC struct {
 
 // RegisterProxy registers trusted-proxy identity header overrides.
 func RegisterProxy(tf *tinyflags.FlagSet, cfg *Proxy) {
-	defaults := proxy.Defaults()
+	RegisterTrustedProxyCIDRs(tf, cfg)
+	RegisterTrustedUsernameHeaders(tf, cfg)
+	RegisterTrustedEmailHeaders(tf, cfg)
+	RegisterTrustedDisplayNameHeaders(tf, cfg)
+	RegisterTrustedGroupHeaders(tf, cfg)
+	RegisterTrustedAdminGroup(tf, cfg)
+}
+
+// RegisterTrustedProxyCIDRs registers trusted proxy CIDRs.
+func RegisterTrustedProxyCIDRs(tf *tinyflags.FlagSet, cfg *Proxy) {
 	tf.StringSliceVar(&cfg.TrustedCIDRs, "trusted-proxy-cidrs", nil,
 		"Trusted ingress peer CIDRs, or * to explicitly trust every peer (unsafe without ingress isolation)").
 		Placeholder("CIDR...").
 		Section(SectionProxy).
 		Value()
+}
 
+// RegisterTrustedUsernameHeaders registers trusted username headers.
+func RegisterTrustedUsernameHeaders(tf *tinyflags.FlagSet, cfg *Proxy) {
+	defaults := proxy.Defaults()
 	tf.StringSliceVar(&cfg.UsernameHeaders, "trusted-username-headers",
 		defaults.UsernameHeaders,
 		"Trusted-proxy username headers").
 		Placeholder("USERNAME-HEADER...").
 		Section(SectionProxy).
 		Value()
+}
 
+// RegisterTrustedEmailHeaders registers trusted email headers.
+func RegisterTrustedEmailHeaders(tf *tinyflags.FlagSet, cfg *Proxy) {
+	defaults := proxy.Defaults()
 	tf.StringSliceVar(&cfg.EmailHeaders, "trusted-email-headers",
 		defaults.EmailHeaders,
 		"Trusted-proxy email headers").
@@ -60,6 +77,11 @@ func RegisterProxy(tf *tinyflags.FlagSet, cfg *Proxy) {
 		AllowEmpty().
 		Section(SectionProxy).
 		Value()
+}
+
+// RegisterTrustedDisplayNameHeaders registers trusted display name headers.
+func RegisterTrustedDisplayNameHeaders(tf *tinyflags.FlagSet, cfg *Proxy) {
+	defaults := proxy.Defaults()
 	tf.StringSliceVar(&cfg.DisplayNameHeaders, "trusted-display-name-headers",
 		defaults.DisplayNameHeaders,
 		"Trusted-proxy display name headers").
@@ -67,6 +89,11 @@ func RegisterProxy(tf *tinyflags.FlagSet, cfg *Proxy) {
 		Section(SectionProxy).
 		AllowEmpty().
 		Value()
+}
+
+// RegisterTrustedGroupHeaders registers trusted group headers.
+func RegisterTrustedGroupHeaders(tf *tinyflags.FlagSet, cfg *Proxy) {
+	defaults := proxy.Defaults()
 	tf.StringSliceVar(&cfg.GroupHeaders, "trusted-group-headers",
 		defaults.GroupHeaders,
 		"Trusted-proxy group headers").
@@ -74,6 +101,10 @@ func RegisterProxy(tf *tinyflags.FlagSet, cfg *Proxy) {
 		AllowEmpty().
 		Section(SectionProxy).
 		Value()
+}
+
+// RegisterTrustedAdminGroup registers trusted administrator group.
+func RegisterTrustedAdminGroup(tf *tinyflags.FlagSet, cfg *Proxy) {
 	tf.StringVar(&cfg.AdminGroup, "trusted-admin-group", "", "External group granting administration access").
 		Placeholder("GROUP").
 		Section(SectionProxy).
@@ -112,31 +143,56 @@ func copyHeaders(headers []string) *[]string {
 
 // RegisterOIDC registers OIDC deployment settings with secret masking.
 func RegisterOIDC(tf *tinyflags.FlagSet, cfg *OIDC) {
+	RegisterOIDCIssuer(tf, cfg)
+	RegisterOIDCClientID(tf, cfg)
+	RegisterOIDCClientSecret(tf, cfg)
+	RegisterOIDCSessionSecret(tf, cfg)
+	RegisterOIDCGroupClaim(tf, cfg)
+	RegisterOIDCAdminGroup(tf, cfg)
+}
+
+// RegisterOIDCIssuer registers the OIDC issuer flag.
+func RegisterOIDCIssuer(tf *tinyflags.FlagSet, cfg *OIDC) {
 	tf.StringVar(&cfg.Issuer, "oidc-issuer", "", "OpenID Connect issuer override").
 		Section(SectionOIDC).
 		Placeholder("URL").
 		Value()
+}
 
+// RegisterOIDCClientID registers the OIDC client ID flag.
+func RegisterOIDCClientID(tf *tinyflags.FlagSet, cfg *OIDC) {
 	tf.StringVar(&cfg.ClientID, "oidc-client-id", "", "OpenID Connect client ID override").
 		Section(SectionOIDC).
 		Value()
+}
 
+// RegisterOIDCClientSecret registers the OIDC client secret flag.
+func RegisterOIDCClientSecret(tf *tinyflags.FlagSet, cfg *OIDC) {
 	tf.StringVar(&cfg.ClientSecret, "oidc-client-secret", "", "OpenID Connect client secret").
 		Section(SectionOIDC).
 		OverriddenValueMaskFn(tinyflags.MaskFirstLast).
 		Value()
+}
 
+// RegisterOIDCSessionSecret registers the OIDC session secret flag.
+func RegisterOIDCSessionSecret(tf *tinyflags.FlagSet, cfg *OIDC) {
 	tf.StringVar(&cfg.SessionSecret, "oidc-session-secret", "", "Secret for OIDC transient login state").
 		Section(SectionOIDC).
 		OverriddenValueMaskFn(tinyflags.MaskFirstLast).
 		Validate(tinyflags.
 			Optional(tinyflags.MinLength(32))).
 		Value()
+}
 
+// RegisterOIDCGroupClaim registers the OIDC group claim flag.
+func RegisterOIDCGroupClaim(tf *tinyflags.FlagSet, cfg *OIDC) {
 	tf.StringVar(&cfg.GroupClaim, "oidc-group-claim", "groups", "External group-membership claim name").
 		Section(SectionOIDC).
 		Value()
+}
 
+// RegisterOIDCAdminGroup registers the OIDC administrator group flag.
+func RegisterOIDCAdminGroup(tf *tinyflags.FlagSet, cfg *OIDC) {
 	tf.StringVar(&cfg.AdminGroup, "oidc-admin-group", "", "External group granting administration access").
 		Section(SectionOIDC).
 		Value()

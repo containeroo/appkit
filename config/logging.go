@@ -23,16 +23,24 @@ func RegisterLogFormat(tf *tinyflags.FlagSet, format *logging.LogFormat) func() 
 // RegisterLogging adds logging flags, returning a finalizer for the enum value.
 func RegisterLogging(tf *tinyflags.FlagSet, cfg *Logging) func() {
 	finalizeFormat := registerLogFormat(tf, &cfg.Format, SectionLogging)
+	RegisterDebug(tf, cfg)
+	RegisterAccessLog(tf, cfg)
+	return finalizeFormat
+}
 
+// RegisterDebug adds the diagnostic logging flag.
+func RegisterDebug(tf *tinyflags.FlagSet, cfg *Logging) {
 	tf.BoolVar(&cfg.Debug, "debug", false, "Enable verbose diagnostic logging").
 		Section(SectionLogging).
 		Short("d").
 		Value()
+}
 
+// RegisterAccessLog adds the HTTP request logging flag.
+func RegisterAccessLog(tf *tinyflags.FlagSet, cfg *Logging) {
 	tf.BoolVar(&cfg.AccessLog, "access-log", false, "Enable HTTP request logging").
 		Section(SectionLogging).
 		Value()
-	return finalizeFormat
 }
 
 // registerLogFormat adds the shared enum and optionally places it in a flag section.
