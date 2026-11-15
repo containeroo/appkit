@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -86,5 +87,21 @@ func TestCookieSecuritySettings(t *testing.T) {
 	cleared := cfg.Cookie("token", true)
 	if cleared.MaxAge != -1 || cleared.Value != "" {
 		t.Fatalf("unexpected cleared cookie: %#v", cleared)
+	}
+}
+
+func TestScopedSessionRejectsRelabeling(t *testing.T) {
+	m := Manager[string]{Store: new(memoryStore), Lifetime: time.Hour, Purpose: "browser"}
+	token, err := m.StartScoped(t.Context(), "alice", "oidc:old")
+	if err != nil || Scope(token) != "oidc:old" {
+		t.Fatal("issue scoped session", err)
+	}
+	_, random, _ := strings.Cut(token, ".")
+	changed := "bG9jYWw." + random
+	if _, err := m.Resolve(t.Context(), changed); !errors.Is(err, auth.ErrUnauthenticated) {
+		t.Fatal("modified origin accepted", err)
+	}
+	if u, err := m.Resolve(t.Context(), token); u != "alice" || err != nil {
+		t.Fatal("original session rejected", err)
 	}
 }

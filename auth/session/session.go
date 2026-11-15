@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/containeroo/appkit/auth"
@@ -62,6 +63,24 @@ func TokenHash(purpose, token string) string {
 
 // Start creates a cryptographically random token and persists only its hash.
 func (m Manager[User]) Start(ctx context.Context, user User) (string, error) {
+	return m.StartScoped(ctx, user, "")
+}
+
+// Scope returns the scope encoded in a token; trust it only after Resolve succeeds.
+func Scope(token string) string {
+	encoded, _, ok := strings.Cut(token, ".")
+	if !ok {
+		return ""
+	}
+	scope, err := base64.RawURLEncoding.DecodeString(encoded)
+	if err != nil {
+		return ""
+	}
+	return string(scope)
+}
+
+// StartScoped binds scope to the stored token hash so altering scope invalidates the token.
+func (m Manager[User]) StartScoped(ctx context.Context, user User, scope string) (string, error) {
 	if err := m.Validate(); err != nil {
 		return "", err
 	}
@@ -70,6 +89,9 @@ func (m Manager[User]) Start(ctx context.Context, user User) (string, error) {
 		return "", fmt.Errorf("generate session token: %w", err)
 	}
 	token := base64.RawURLEncoding.EncodeToString(bytes)
+	if scope != "" {
+		token = base64.RawURLEncoding.EncodeToString([]byte(scope)) + "." + token
+	}
 	if err := m.Store.Create(ctx, TokenHash(m.Purpose, token), user, time.Now().Add(m.Lifetime)); err != nil {
 		return "", fmt.Errorf("persist session: %w", err)
 	}
