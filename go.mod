@@ -7,7 +7,7 @@ require (
 	github.com/containeroo/tinyflags v0.12.0
 	github.com/coreos/go-oidc/v3 v3.21.0
 	golang.org/x/crypto v0.59.0
-	golang.org/x/oauth2 v0.37.0
+	golang.org/x/oauth2 v0.38.0
 )
 
 require (
